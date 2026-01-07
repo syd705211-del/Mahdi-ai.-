@@ -1,5 +1,5 @@
 import streamlit as st
-import random
+from transformers import pipeline
 
 # إعداد الصفحة
 st.set_page_config(
@@ -8,55 +8,32 @@ st.set_page_config(
     layout="centered"
 )
 
-# الواجهة
-st.markdown("""
-<div style="text-align:center">
-    <div style="font-size:80px">🤖</div>
-    <h1>منصة مهدي للذكاء الاصطناعي</h1>
-    <p style="font-size:18px;">تطوير: عبدالرزاق مهدي</p>
-</div>
-<hr>
-""", unsafe_allow_html=True)
+# العنوان
+st.markdown("<h1 style='text-align:center;'>منصة مهدي للذكاء الاصطناعي 🤖</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>تطوير: عبدالرزاق مهدي</p>", unsafe_allow_html=True)
+st.markdown("---")
 
-st.write("### 👋 مرحبًا بك")
-st.write("أداة ذكاء اصطناعي عربية مجانية للتجربة والتعليم")
+# تحميل النموذج (مرة واحدة)
+@st.cache_resource
+def load_model():
+    return pipeline(
+        "text-generation",
+        model="akhooli/gpt2-small-arabic"
+    )
 
-# قاعدة ردود ذكية (عربية)
-responses = {
-    "السلام عليكم": [
-        "وعليكم السلام ورحمة الله وبركاته 🌷",
-        "أهلاً وسهلاً، كيف أقدر أساعدك؟"
-    ],
-    "من انت": [
-        "أنا مساعد ذكي تم تطويري بواسطة عبدالرزاق مهدي 🤖",
-        "أنا أداة ذكاء اصطناعي عربية للتجربة"
-    ],
-    "ما هو الذكاء الاصطناعي": [
-        "الذكاء الاصطناعي هو مجال يهتم بجعل الآلة تفكر وتتعلم مثل الإنسان.",
-        "هو تقنية تساعد الحاسوب على الفهم والتحليل واتخاذ القرار."
-    ],
-}
+model = load_model()
 
-# الإدخال
+# واجهة المستخدم
 user_input = st.text_input("✍️ اكتب سؤالك هنا:")
 
-# المعالجة
 if user_input:
-    answer = None
-    for key in responses:
-        if key in user_input:
-            answer = random.choice(responses[key])
-            break
+    with st.spinner("⏳ الذكاء الاصطناعي يفكّر..."):
+        result = model(
+            user_input,
+            max_length=120,
+            do_sample=True,
+            temperature=0.9
+        )
 
-    if not answer:
-        answer = "🤔 سؤالك جميل، هذه نسخة تجريبية وسنطوّرها قريبًا إن شاء الله."
-
-    st.success(answer)
-
-# تذييل
-st.markdown("""
-<hr>
-<p style="text-align:center; font-size:14px;">
-© 2026 – منصة مهدي للذكاء الاصطناعي | تطوير عبدالرزاق مهدي
-</p>
-""", unsafe_allow_html=True)
+    st.success("🤖 الرد:")
+    st.write(result[0]["generated_text"])
